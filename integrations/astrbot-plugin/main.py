@@ -55,13 +55,13 @@ class Plugin(Star):
 
     @ybot.command("tp")
     async def tp(self, event: AstrMessageEvent, game_name: str):
-        """向指定玩家发送传送请求 /ybot tp <游戏名>"""
+        """接受玩家传送请求 /ybot tp <游戏名>"""
         if not self.api_key:
             yield event.plain_result("⚠️ 插件未配置 API Key，请联系管理员。")
             return
 
         try:
-            data = await self._api_post("/api/tp", {"game_name": game_name})
+            data = await self._api_post("/api/tp/accept", {"game_name": game_name})
             if data.get("success"):
                 yield event.plain_result(f"✅ {data.get('message', '已发送传送请求')}")
             else:
@@ -225,7 +225,6 @@ class Plugin(Star):
             yield event.plain_result("⚠️ 插件未配置 API Key，请联系管理员。")
             return
 
-        # 从原始消息中去掉命令前缀，支持多单词消息
         message = event.message_str.removeprefix("/ybot say").removeprefix("ybot say").strip()
         if not message:
             yield event.plain_result("❌ 请指定要发送的消息。")

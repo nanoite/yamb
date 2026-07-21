@@ -1,0 +1,10 @@
+{
+  // 是否启用 prismarine-viewer 网页可视化
+  "enabled": false,
+  // 浏览器访问端口
+  "port": 3007,
+  // 第一人称视角（false 为第三人称跟随）
+  "firstPerson": false,
+  // 渲染视距（区块）
+  "viewDistance": 6
+}

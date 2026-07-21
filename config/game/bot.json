@@ -1,0 +1,24 @@
+{
+  // 无互动超过此毫秒数后自动 /home 并 AFK
+  "idleTimeoutMs": 90000,
+  // 检查空闲状态的间隔（毫秒）
+  "idleCheckIntervalMs": 10000,
+  // 待命时执行的回家指令
+  "homeCommand": "/home",
+  // 待命/命令响应后执行的 AFK 指令
+  "afkCommand": "/afk",
+  // 触发 AFK 前的延迟（毫秒）
+  "afkDelayMs": 500,
+  // 执行 /home 后等待时间（毫秒），用于传送完成
+  "homeWaitMs": 3000,
+  // 多条私聊回复之间的间隔（毫秒）
+  "replyDelayMs": 500,
+  // mount/attack 等与目标交互的最大距离（格）
+  "interactionDistance": 3,
+  // 开始寻路接近目标的最大距离（格）
+  "approachDistance": 10,
+  // forward 命令：发公屏后等待系统消息的时长（毫秒）
+  "forwardWaitMs": 2000,
+  // 骑乘状态检测间隔（毫秒）
+  "ridingCheckIntervalMs": 1500
+}

@@ -1,18 +1,24 @@
-class MessageQueue {
-  constructor () {
-    this.queue = []
-    this.isProcessing = false
-    this.lock = false
-    this.maxSize = 100
-    this.delayMs = 1000
-    this.bot = null
+import type { MessageQueueConfig, QueueStatus, QueueTask } from '../types'
+import type MinecraftBot from './minecraft-bot'
+
+export default class MessageQueue {
+  private queue: QueueTask[] = []
+  private isProcessing = false
+  private lock = false
+  private maxSize: number
+  private delayMs: number
+  private bot: MinecraftBot | null = null
+
+  constructor (options: Partial<MessageQueueConfig> = {}) {
+    this.maxSize = options.maxSize ?? 100
+    this.delayMs = options.delayMs ?? 1000
   }
 
-  setBot (bot) {
+  setBot (bot: MinecraftBot): void {
     this.bot = bot
   }
 
-  enqueue (message, sender = null) {
+  enqueue (message: string, sender: string | null = null): void {
     if (!message || !message.trim()) return
 
     if (this.queue.length >= this.maxSize) {
@@ -38,17 +44,22 @@ class MessageQueue {
     }
   }
 
-  process () {
+  process (): void {
     if (this.lock || this.isProcessing || this.queue.length === 0) return
 
     this.lock = true
     this.isProcessing = true
 
     const task = this.queue.shift()
+    if (!task) {
+      this.isProcessing = false
+      this.lock = false
+      return
+    }
 
     setTimeout(() => {
       try {
-        if (this.bot && this.bot.chat) {
+        if (this.bot?.chat) {
           this.bot.chat(task.message)
           console.log(`[Queue] 发送消息: ${task.message} (来自: ${task.sender || '系统'})`)
         } else {
@@ -67,12 +78,12 @@ class MessageQueue {
     }, this.delayMs)
   }
 
-  clear () {
+  clear (): void {
     this.queue = []
     console.log('[Queue] 队列已清空')
   }
 
-  getStatus () {
+  getStatus (): QueueStatus {
     return {
       size: this.queue.length,
       isProcessing: this.isProcessing,
@@ -81,5 +92,3 @@ class MessageQueue {
     }
   }
 }
-
-module.exports = MessageQueue

@@ -1,23 +1,35 @@
 {
-  "name": "mchatbot",
+  "name": "yamb",
   "version": "1.0.0",
-  "description": "Minecraft bot with HTTP API for astrbot integration",
-  "main": "index.js",
+  "description": "Yet Another MChatBot — Minecraft bot with in-game commands and optional AstrBot API",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
+    "build": "tsc",
+    "start": "tsc && node dist/index.js",
+    "dev": "tsx src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "minecraft",
     "mineflayer",
-    "bot"
+    "bot",
+    "yamb"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "type": "commonjs",
   "dependencies": {
+    "canvas": "^3.2.3",
     "dotenv": "^16.6.1",
     "express": "^4.22.2",
-    "mineflayer": "^4.37.1"
+    "mineflayer": "^4.37.1",
+    "mineflayer-pathfinder": "^2.4.5",
+    "prismarine-viewer": "^1.33.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
   }
 }

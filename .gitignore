@@ -1,6 +1,7 @@
 node_modules/
+dist/
 mc-tokens/
-data/whitelist.json
+data/
 *.log
 *.zip
 .env

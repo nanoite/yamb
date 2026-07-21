@@ -1,0 +1,22 @@
+{
+  // SQLite 数据库路径（白名单、容器记录）
+  "databaseFile": "./data/mchatbot.db",
+  // 接受传送请求的指令
+  "tpacceptCommand": "/tpaccept",
+  // 拉取玩家到 bot 位置的指令
+  "tpahereCommand": "/tpahere",
+  // 传送到命名传送点的指令（后接 id）
+  "phomeCommand": "/phome",
+  // phome 执行后等待传送的延迟（毫秒）
+  "waypointDelayMs": 3000,
+  // 传送点列表：id 为 phome 参数，alias 为命令中使用的别名
+  "waypoints": [
+    { "id": "凋零玫瑰塔", "alias": "1" },
+    { "id": "刷沙机", "alias": "2" },
+    { "id": "工业区", "alias": "3" },
+    { "id": "沼泽刷怪塔", "alias": "4" },
+    { "id": "猪人塔", "alias": "5" },
+    { "id": "现代区", "alias": "6" },
+    { "id": "璃月港", "alias": "7" }
+  ]
+}
