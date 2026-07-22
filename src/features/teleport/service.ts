@@ -1,5 +1,6 @@
 import type { ServiceResult, TeleportConfig, WaypointConfig } from '../../types'
 import type MinecraftBot from '../../platform/minecraft-bot'
+import { jumpAndHover } from '../../actions/shared/entity-utils'
 import { sleep } from '../../platform/sleep'
 
 export default class TeleportService {
@@ -11,6 +12,10 @@ export default class TeleportService {
   private waypointDelayMs: number
   private locked = false
   private lockedBy: string | null = null
+  private hoverLocked = false
+  private beforeLock: (() => Promise<void>) | null = null
+  private onLock: (() => void) | null = null
+  private onUnlock: ((info: { wasHover: boolean }) => void) | null = null
 
   constructor (mcBot: MinecraftBot, config: TeleportConfig) {
     this.mcBot = mcBot
@@ -23,24 +28,73 @@ export default class TeleportService {
     this.waypointDelayMs = config.waypointDelayMs ?? 3000
   }
 
+  /** 锁定前钩子（例如骑乘时先下马，保证空闲/骑乘/锁定互斥） */
+  setBeforeLock (beforeLock: () => Promise<void>): void {
+    this.beforeLock = beforeLock
+  }
+
+  setOnLock (onLock: () => void): void {
+    this.onLock = onLock
+  }
+
+  setOnUnlock (onUnlock: (info: { wasHover: boolean }) => void): void {
+    this.onUnlock = onUnlock
+  }
+
   isLocked (): boolean {
     return this.locked
+  }
+
+  isHoverLocked (): boolean {
+    return this.locked && this.hoverLocked
   }
 
   getLockedBy (): string | null {
     return this.lockedBy
   }
 
+  /**
+   * 进入锁定：先执行 beforeLock；
+   * options.hover 时先滞空再锁定。
+   */
+  async prepareAndLock (
+    by: string,
+    options?: { hover?: boolean }
+  ): Promise<{ success: boolean; code?: 'already' | 'not_ready' | 'hover_failed' }> {
+    if (this.locked) return { success: false, code: 'already' }
+    if (this.beforeLock) await this.beforeLock()
+
+    if (options?.hover) {
+      const bot = this.mcBot.bot
+      if (!bot || !this.mcBot.isReady) {
+        return { success: false, code: 'not_ready' }
+      }
+      const hovered = await jumpAndHover(bot)
+      if (!hovered) return { success: false, code: 'hover_failed' }
+      this.hoverLocked = true
+    } else {
+      this.hoverLocked = false
+    }
+
+    this.lock(by)
+    return { success: true }
+  }
+
   lock (by: string): void {
     this.locked = true
     this.lockedBy = by
-    console.log(`[Teleport] Locked by ${by}`)
+    this.onLock?.()
+    console.log(`[Teleport] Locked by ${by}${this.hoverLocked ? ' (hover)' : ''}`)
   }
 
-  unlock (): void {
+  unlock (): { wasHover: boolean } {
+    const wasHover = this.hoverLocked
     this.locked = false
     this.lockedBy = null
-    console.log('[Teleport] Unlocked')
+    this.hoverLocked = false
+    this.onUnlock?.({ wasHover })
+    console.log(`[Teleport] Unlocked${wasHover ? ' (resume physics)' : ''}`)
+    return { wasHover }
   }
 
   canAcceptRequest (type: 'tpa' | 'tpahere'): boolean {

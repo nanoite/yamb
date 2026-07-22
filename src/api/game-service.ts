@@ -5,15 +5,20 @@ import type Whitelist from '../permissions/whitelist'
 export default class GameApiService {
   private mcBot: MinecraftBot
   private whitelist: Whitelist
+  private isLocked: () => boolean
 
-  constructor (mcBot: MinecraftBot, whitelist: Whitelist) {
+  constructor (mcBot: MinecraftBot, whitelist: Whitelist, isLocked: () => boolean = () => false) {
     this.mcBot = mcBot
     this.whitelist = whitelist
+    this.isLocked = isLocked
   }
 
   say (message: string): ServiceResult {
     if (!this.mcBot.isReady) {
       return { success: false, message: '机器人未就绪' }
+    }
+    if (this.isLocked()) {
+      return { success: false, message: 'bot 已锁定，无法发送公屏消息' }
     }
 
     this.mcBot.chat(message)

@@ -19,6 +19,8 @@ import CommandHandler from './features/commands/handler'
 import { registerChatListeners } from './features/commands/listeners'
 import BrewModule from './features/brew'
 import AstrbotServer from './api/server'
+import { sleep } from './platform/sleep'
+import { resumeBotPhysics } from './actions/shared/entity-utils'
 
 async function main (): Promise<void> {
   const config = loadConfig()
@@ -61,9 +63,28 @@ async function main (): Promise<void> {
     config.bot.approachDistance
   )
   const ridingManager = new RidingManager(mcBot, playerInteraction, config.bot)
+  const isLocked = (): boolean => teleportService.isLocked()
+
+  // 空闲 / 骑乘 / 锁定互斥：锁定前若在骑乘则先下马
+  teleportService.setBeforeLock(async () => {
+    if (!ridingManager.isActive()) return
+    console.log('[Teleport] 锁定前下马（骑乘与锁定互斥）')
+    await ridingManager.dismount()
+    await sleep(400)
+  })
+  teleportService.setOnLock(() => standbyManager.scheduleAfk())
+  teleportService.setOnUnlock(({ wasHover }) => {
+    if (wasHover && mcBot.bot) {
+      resumeBotPhysics(mcBot.bot)
+    }
+  })
+
   standbyManager.setRidingManager(ridingManager)
+  standbyManager.setIsLocked(isLocked)
+  ridingManager.setIsLocked(isLocked)
+  ridingManager.setOnBehaviorEnd(() => standbyManager.scheduleAfk())
   const inventoryActions = new InventoryActions(mcBot)
-  const gameApiService = new GameApiService(mcBot, whitelist)
+  const gameApiService = new GameApiService(mcBot, whitelist, isLocked)
   const commandHandler = new CommandHandler(
     mcBot,
     teleportService,

@@ -23,7 +23,10 @@ export interface MessagesConfig {
   phomeError?: string
   lockedBlocked?: string
   lockAlready?: string
+  lockUsage?: string
   lockSuccess?: string
+  lockHoverSuccess?: string
+  lockHoverFailed?: string
   unlockNotLocked?: string
   unlockSuccess?: string
   addUsage?: string

@@ -7,7 +7,8 @@ import {
   entityDistance,
   entityLookPoint,
   getPlayerEntity,
-  isMountedOnPlayer
+  isMountedOnPlayer,
+  isOnPluginCloudSeat
 } from '../shared/entity-utils'
 
 export default class PlayerInteractionService {
@@ -127,15 +128,27 @@ export default class PlayerInteractionService {
 
       const lookPoint = entityLookPoint(entity)
       await bot.activateEntityAt(entity, lookPoint)
-      await sleep(400)
+      await sleep(500)
 
       if (isMountedOnPlayer(bot, targetName)) {
-        console.log(`[Interaction] 骑乘确认成功 (第 ${attempt} 次交互)`)
+        const dist = entityDistance(bot, getPlayerEntity(bot, targetName) ?? entity).toFixed(1)
+        console.log(`[Interaction] 骑乘确认成功 (第 ${attempt} 次交互, 距离 ${dist}, cloudSeat=${isOnPluginCloudSeat(bot)})`)
         return true
       }
 
+      const current = getPlayerEntity(bot, targetName) ?? entity
+      const horizontal = Math.hypot(
+        bot.entity.position.x - current.position.x,
+        bot.entity.position.z - current.position.z
+      )
+      const dy = bot.entity.position.y - current.position.y
+      console.log(
+        `[Interaction] 未骑乘，重试 activateEntityAt (${attempt}/${maxAttempts})` +
+        ` horiz=${horizontal.toFixed(2)} dy=${dy.toFixed(2)}` +
+        ` onGround=${bot.entity.onGround} cloudSeat=${isOnPluginCloudSeat(bot)}`
+      )
+
       if (attempt < maxAttempts) {
-        console.log(`[Interaction] 未骑乘，重试 activateEntityAt (${attempt}/${maxAttempts})`)
         await sleep(250)
       }
     }

@@ -25,14 +25,37 @@ export async function handlePhome (
 export async function handleLock (
   ctx: CommandContext,
   username: string,
+  arg: string | undefined,
   source: CommandSource
 ): Promise<void> {
   if (ctx.teleportService.isLocked()) {
     await ctx.reply(username, ctx.messages.text('lockAlready'), source)
     return
   }
-  ctx.teleportService.lock(username)
-  await ctx.reply(username, ctx.messages.text('lockSuccess'), source)
+
+  const mode = (arg || '').toLowerCase().trim()
+  if (mode && mode !== 'hover') {
+    await ctx.reply(username, ctx.messages.text('lockUsage'), source)
+    return
+  }
+
+  const hover = mode === 'hover'
+  const result = await ctx.teleportService.prepareAndLock(username, { hover })
+
+  if (!result.success) {
+    if (result.code === 'hover_failed' || result.code === 'not_ready') {
+      await ctx.reply(username, ctx.messages.text('lockHoverFailed'), source)
+      return
+    }
+    await ctx.reply(username, ctx.messages.text('lockAlready'), source)
+    return
+  }
+
+  await ctx.reply(
+    username,
+    ctx.messages.text(hover ? 'lockHoverSuccess' : 'lockSuccess'),
+    source
+  )
 }
 
 export async function handleUnlock (
@@ -44,6 +67,7 @@ export async function handleUnlock (
     await ctx.reply(username, ctx.messages.text('unlockNotLocked'), source)
     return
   }
+
   ctx.teleportService.unlock()
   await ctx.reply(username, ctx.messages.text('unlockSuccess'), source)
 }

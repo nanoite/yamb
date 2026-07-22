@@ -40,6 +40,7 @@ export default class TeleportIncomingHandler {
       if (request.type === 'tpahere' && this.teleportService.isLocked()) {
         this.notifyLocked(request.playerName)
       }
+      this.standby.scheduleAfk()
       return true
     }
 
@@ -50,7 +51,9 @@ export default class TeleportIncomingHandler {
     }
     this._lastAccept = { key: dedupeKey, time: now }
 
-    void this.teleportService.acceptRequest(request.playerName, request.type)
+    void this.teleportService.acceptRequest(request.playerName, request.type).then(() => {
+      this.standby.scheduleAfk()
+    })
     return true
   }
 

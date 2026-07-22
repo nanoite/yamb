@@ -2,6 +2,7 @@ import mineflayer, { Bot, BotOptions } from 'mineflayer'
 import type { MinecraftConfig } from '../types'
 import type MessageQueue from './message-queue'
 import { getBotClient } from './bot-client'
+import { resumeBotPhysics } from '../actions/shared/entity-utils'
 
 export default class MinecraftBot {
   config: MinecraftConfig
@@ -41,6 +42,7 @@ export default class MinecraftBot {
       keepAlive: true,
       skipValidation: true,
       hideErrors: true,
+      physicsEnabled: true,
       ...(this.config.version !== false ? { version: this.config.version } : {})
     } as BotOptions
 
@@ -71,6 +73,7 @@ export default class MinecraftBot {
       console.log('[MC] Bot spawned in world')
       this.isReady = true
       this.reconnectAttempts = 0
+      this.bot!.physicsEnabled = true
 
       if (this.messageQueue) {
         this.messageQueue.setBot(this)
@@ -79,6 +82,16 @@ export default class MinecraftBot {
       for (const callback of this.onSpawnCallbacks) {
         callback(this)
       }
+    })
+
+    // mount 会暂停物理；dismount 后 mineflayer 不会自动恢复，需手动打开
+    this.bot.on('dismount', () => {
+      console.log('[MC] dismount → 恢复物理')
+      resumeBotPhysics(this.bot!)
+    })
+
+    this.bot.on('mount', () => {
+      console.log('[MC] mount → 物理由 mineflayer 暂停（载具模式）')
     })
 
     this.bot.on('kicked', (reason) => {

@@ -34,7 +34,7 @@ export default function createTeleportRoutes (
     res.json(result)
   })
 
-  router.post('/lock', (req: Request, res: Response) => {
+  router.post('/lock', async (req: Request, res: Response) => {
     const { game_name } = req.body as { game_name?: string }
     if (!game_name) {
       return res.status(400).json({ success: false, message: 'Missing game_name' })
@@ -43,7 +43,7 @@ export default function createTeleportRoutes (
       return res.json({ success: false, message: `${game_name} 不在白名单中` })
     }
 
-    teleportService.lock(game_name)
+    await teleportService.prepareAndLock(game_name)
     res.json({ success: true, message: '已锁定' })
   })
 

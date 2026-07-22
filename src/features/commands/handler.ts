@@ -26,6 +26,20 @@ import { handleContainer, handleInv, handleStore, handleTake, handleDrop } from 
 import { handleAdd, handleRemove, handleSay, handleForward } from './handlers/admin'
 import { handleStatus, handleHelp } from './handlers/info'
 
+/** 锁定后禁止的动作命令（仅允许 /tpa 与文本回复类命令） */
+const LOCKED_BLOCKED_COMMANDS = new Set([
+  'phome',
+  'mount',
+  'unmount',
+  'cart',
+  'attack',
+  'store',
+  'take',
+  'drop',
+  'say',
+  'forward'
+])
+
 export default class CommandHandler {
   private mcBot: MinecraftBot
   private teleportService: TeleportService
@@ -188,6 +202,22 @@ export default class CommandHandler {
     console.log(`[Command:${source}] ${username} -> ${cmd} ${parts.join(' ')}`.trim())
 
     const ctx = this.buildContext()
+    const locked = this.teleportService.isLocked()
+
+    if (locked && LOCKED_BLOCKED_COMMANDS.has(cmd)) {
+      await this.notifyLocked(username, source)
+      this.standby.scheduleAfk()
+      return
+    }
+
+    if (locked && cmd === 'container') {
+      const sub = (parts[0] || '').toLowerCase()
+      if (sub === 'add' || sub === 'remove') {
+        await this.notifyLocked(username, source)
+        this.standby.scheduleAfk()
+        return
+      }
+    }
 
     switch (cmd) {
       case 'phome':
@@ -209,7 +239,7 @@ export default class CommandHandler {
         await handleContainer(ctx, username, parts, source)
         break
       case 'lock':
-        await handleLock(ctx, username, source)
+        await handleLock(ctx, username, parts[0], source)
         break
       case 'unlock':
         await handleUnlock(ctx, username, source)
